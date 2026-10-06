@@ -1,0 +1,52 @@
+/* Cozy Crafts — shared design tokens + base (used by the shop and the admin) */
+/* Layout concept: a crafter's table — cream paper with a faint dot grid, die-cut "sticker" cards held by washi tape,
+   dusty blue from the logo as the brand ink, peach + sage as small warm accents. */
+:root{
+  /* Color */
+  --paper:#FDF9EE;      /* page ground — matches the logo background */
+  --paper-2:#F5ECDD;    /* beige panels */
+  --card:#FFFDF8;       /* card + die-cut border */
+  --ink:#3A2E28;        /* warm brown text */
+  --ink-soft:#6B5B50;
+  --line:#E7DBC9;
+  --blue:#4A6B96;       /* brand ink, from the logo */
+  --blue-soft:#DFE8F4;
+  --white:#FFFFFF;      /* clean white section ground */
+  --sky:#EAF1FA;        /* light blue section ground */
+  --on-blue:#FFFFFF;
+  --peach:#C9785A;      /* text-safe peach */
+  --peach-fill:#EDB49A;
+  --peach-soft:#F9E4D7;
+  --sage:#6E8463;
+  --sage-fill:#AEBEA3;
+  --sage-soft:#E6ECDF;
+  --shadow:58 46 40;
+  /* Type */
+  --font-display:"Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-body:"Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-hand:"Caveat", "Segoe Print", "Bradley Hand", cursive;
+  --step--1:.875rem; --step-0:1rem; --step-1:1.2rem; --step-2:1.5rem; --step-3:clamp(1.75rem,3.2vw,2.4rem); --step-4:clamp(2.3rem,5.2vw,4rem);
+  /* Space + shape */
+  --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s5:1.5rem; --s6:2rem; --s7:3rem; --s8:4.5rem; --s9:6rem;
+  --r-sm:10px; --r-md:18px; --r-lg:28px; --r-pill:999px;
+  --wrap:1180px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#1F1A17; --paper-2:#28221E; --card:#2E2723; --ink:#F3EADF; --ink-soft:#C4B5A8; --line:#41372F;
+  --blue:#A3BDE0; --blue-soft:#2B3546; --sky:#1E2631; --white:#272220; --on-blue:#17202D;
+  --peach:#EDB396; --peach-fill:#C98A6E; --peach-soft:#3B2B23;
+  --sage:#B5C6A9; --sage-fill:#7F9473; --sage-soft:#2A3127; --shadow:0 0 0; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#1F1A17; --paper-2:#28221E; --card:#2E2723; --ink:#F3EADF; --ink-soft:#C4B5A8; --line:#41372F;
+  --blue:#A3BDE0; --blue-soft:#2B3546; --sky:#1E2631; --white:#272220; --on-blue:#17202D;
+  --peach:#EDB396; --peach-fill:#C98A6E; --peach-soft:#3B2B23;
+  --sage:#B5C6A9; --sage-fill:#7F9473; --sage-soft:#2A3127; --shadow:0 0 0; color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:var(--step-0);line-height:1.65;-webkit-font-smoothing:antialiased}

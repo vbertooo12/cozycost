@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Cozy Crafts Admin</title>
+<link rel="icon" type="image/webp" href="/assets/logo.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..700,0..100,0..1;1,9..144,400..700,0..100,0..1&family=Nunito:ital,wght@0,400..800;1,400&display=swap">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin">
+
+<!-- ============ SETUP NOTICE ============ -->
+<main class="center-screen" id="setupView" hidden>
+  <div class="auth-card">
+    <img src="/assets/logo.webp" alt="Cozy Crafts" width="96" height="96" class="auth-logo">
+    <h1>Connect Supabase first</h1>
+    <p>Add your Supabase project URL and anon key to <code>js/config.js</code>, then reload this page. The README walks through it step by step.</p>
+  </div>
+</main>
+
+<!-- ============ LOGIN ============ -->
+<main class="center-screen" id="loginView" hidden>
+  <form class="auth-card" id="loginForm" novalidate>
+    <img src="/assets/logo.webp" alt="Cozy Crafts" width="96" height="96" class="auth-logo">
+    <h1>Shop admin</h1>
+    <p class="hint">Sign in to manage orders, products and stock.</p>
+    <div class="field"><label for="l-email">Email</label><input id="l-email" type="email" autocomplete="username" required></div>
+    <div class="field"><label for="l-pass">Password</label><input id="l-pass" type="password" autocomplete="current-password" required></div>
+    <div class="result error" id="loginError" role="alert" hidden></div>
+    <button class="btn btn-primary btn-wide" type="submit" id="loginBtn">Sign in</button>
+    <a class="back-link" href="/">← Back to the shop</a>
+  </form>
+</main>
+
+<!-- ============ NOT AN ADMIN ============ -->
+<main class="center-screen" id="deniedView" hidden>
+  <div class="auth-card">
+    <img src="/assets/logo.webp" alt="Cozy Crafts" width="96" height="96" class="auth-logo">
+    <h1>No admin access</h1>
+    <p>You're signed in as <b id="deniedEmail"></b>, but this account isn't on the admin list. Ask the shop owner to add it in Supabase (see the README).</p>
+    <button class="btn btn-ghost" type="button" data-signout>Sign out</button>
+  </div>
+</main>
+
+<!-- ============ DASHBOARD ============ -->
+<div class="shell" id="appView" hidden>
+  <aside class="side">
+    <a class="brand" href="/" title="View the shop"><img src="/assets/logo.webp" alt="" width="40" height="40"><span>Cozy Crafts</span></a>
+    <nav class="tabs" aria-label="Admin sections">
+      <a href="#overview"  data-tab="overview">Overview</a>
+      <a href="#orders"    data-tab="orders">Orders <span class="count" id="navPending" hidden></span></a>
+      <a href="#products"  data-tab="products">Products</a>
+      <a href="#inventory" data-tab="inventory">Inventory <span class="count warn" id="navLow" hidden></span></a>
+      <a href="#messages"  data-tab="messages">Messages <span class="count" id="navUnread" hidden></span></a>
+    </nav>
+    <div class="side-foot">
+      <span class="who" id="whoami"></span>
+      <a class="link-btn" href="/" target="_blank" rel="noopener">View shop ↗</a>
+      <button class="link-btn" type="button" data-signout>Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+
+    <!-- OVERVIEW -->
+    <section class="panel" data-panel="overview">
+      <header class="panel-head"><div><p class="eyebrow">Overview</p><h1>Today at the craft table</h1></div>
+        <button class="btn btn-ghost btn-small" type="button" data-refresh>Refresh</button></header>
+      <div class="tiles" id="tiles"></div>
+      <div class="two-col">
+        <div class="box"><div class="box-head"><h2>Latest orders</h2><a href="#orders">All orders →</a></div><div id="recentOrders"></div></div>
+        <div class="box"><div class="box-head"><h2>Needs restocking</h2><a href="#inventory">Inventory →</a></div><div id="lowList"></div></div>
+      </div>
+    </section>
+
+    <!-- ORDERS -->
+    <section class="panel" data-panel="orders" hidden>
+      <header class="panel-head"><div><p class="eyebrow">Orders</p><h1>Orders</h1></div>
+        <div class="head-actions"><button class="btn btn-ghost btn-small" type="button" id="exportOrders">Export CSV</button><button class="btn btn-ghost btn-small" type="button" data-refresh>Refresh</button></div></header>
+      <div class="toolbar">
+        <div class="chips" id="orderFilters" role="group" aria-label="Filter orders by status"></div>
+        <input type="search" id="orderSearch" placeholder="Search order #, name, email, phone" aria-label="Search orders">
+      </div>
+      <div class="table-wrap"><table class="tbl" id="ordersTable">
+        <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th class="num">Total</th><th>Status</th><th>Payment</th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="empty-row" id="ordersEmpty" hidden>No orders match. New orders appear here automatically.</p>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section class="panel" data-panel="products" hidden>
+      <header class="panel-head"><div><p class="eyebrow">Catalog</p><h1>Products</h1></div>
+        <button class="btn btn-primary btn-small" type="button" id="newProduct">+ Add product</button></header>
+      <div class="toolbar">
+        <div class="chips" id="productFilters" role="group" aria-label="Filter products"></div>
+        <input type="search" id="productSearch" placeholder="Search products" aria-label="Search products">
+      </div>
+      <div class="table-wrap"><table class="tbl" id="productsTable">
+        <thead><tr><th></th><th>Product</th><th>Category</th><th class="num">Price</th><th class="num">Stock</th><th>Status</th><th>Shown</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="empty-row" id="productsEmpty" hidden>No products yet. Add your first one.</p>
+    </section>
+
+    <!-- INVENTORY -->
+    <section class="panel" data-panel="inventory" hidden>
+      <header class="panel-head"><div><p class="eyebrow">Inventory</p><h1>Stock levels</h1></div>
+        <div class="head-actions"><button class="btn btn-ghost btn-small" type="button" id="exportStock">Export CSV</button><button class="btn btn-ghost btn-small" type="button" data-refresh>Refresh</button></div></header>
+      <p class="hint panel-note">Orders take stock out automatically when they're placed. Cancelling an order puts it back. Use <b>Adjust</b> for new batches and corrections.</p>
+      <div class="table-wrap"><table class="tbl" id="stockTable">
+        <thead><tr><th>Product</th><th class="num">In stock</th><th class="num">In open orders</th><th class="num">Low at</th><th>Level</th><th></th></tr></thead>
+        <tbody></tbody></table></div>
+      <div class="box-head" style="margin-top:var(--s7)"><h2>Stock history</h2><span class="hint">Latest 100 changes</span></div>
+      <div class="table-wrap"><table class="tbl" id="moveTable">
+        <thead><tr><th>When</th><th>Product</th><th class="num">Change</th><th class="num">After</th><th>Reason</th><th>Note / order</th></tr></thead>
+        <tbody></tbody></table></div>
+    </section>
+
+    <!-- MESSAGES -->
+    <section class="panel" data-panel="messages" hidden>
+      <header class="panel-head"><div><p class="eyebrow">Inbox</p><h1>Messages</h1></div>
+        <button class="btn btn-ghost btn-small" type="button" data-refresh>Refresh</button></header>
+      <div class="msg-list" id="msgList"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ORDER DETAIL -->
+<dialog class="sheet" id="orderSheet" aria-labelledby="osTitle">
+  <form method="dialog" class="sheet-inner" id="orderForm">
+    <div class="sheet-head"><div><p class="eyebrow" id="osDate"></p><h2 id="osTitle"></h2></div>
+      <button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="sheet-body">
+      <dl class="kv" id="osCustomer"></dl>
+      <div class="table-wrap"><table class="tbl compact"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody id="osItems"></tbody>
+        <tfoot><tr><td colspan="3">Subtotal</td><td class="num" id="osTotal"></td></tr></tfoot></table></div>
+      <div class="row2">
+        <div class="field"><label for="osStatus">Order status</label><select id="osStatus">
+          <option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="in_production">In production</option>
+          <option value="ready">Ready</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
+        <div class="field"><label for="osPay">Payment</label><select id="osPay">
+          <option value="unpaid">Unpaid</option><option value="paid">Paid</option><option value="refunded">Refunded</option></select></div>
+      </div>
+      <p class="hint" id="osStockHint">Setting an order to Cancelled puts its items back in stock.</p>
+      <div class="field"><label for="osNotes">Private notes</label><textarea id="osNotes" rows="3" placeholder="Only admins see this"></textarea></div>
+      <div class="result error" id="osError" role="alert" hidden></div>
+    </div>
+    <div class="sheet-foot">
+      <button type="button" class="btn btn-ghost btn-small" id="osCopy">Copy customer details</button>
+      <button type="submit" class="btn btn-primary" id="osSave">Save changes</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- PRODUCT EDITOR -->
+<dialog class="sheet" id="productSheet" aria-labelledby="psTitle">
+  <form class="sheet-inner" id="productForm" novalidate>
+    <div class="sheet-head"><div><p class="eyebrow" id="psEyebrow">New product</p><h2 id="psTitle">Add product</h2></div>
+      <button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="sheet-body">
+      <div class="img-edit">
+        <div class="img-preview" id="psPreview"></div>
+        <div class="img-actions">
+          <label class="btn btn-ghost btn-small" for="psFile">Upload photo</label>
+          <input type="file" id="psFile" accept="image/png,image/jpeg,image/webp" hidden>
+          <button type="button" class="link-btn" id="psRemoveImg" hidden>Remove photo</button>
+          <span class="hint">JPG, PNG or WebP, up to 5 MB. Without a photo, the illustration below is shown.</span>
+        </div>
+      </div>
+      <div class="field"><label for="psName">Name</label><input id="psName" required maxlength="120"></div>
+      <div class="row2">
+        <div class="field"><label for="psCat">Category</label><select id="psCat"></select></div>
+        <div class="field"><label for="psSlug">Web address name</label><input id="psSlug" required pattern="[a-z0-9-]+" maxlength="80"><span class="hint">Lowercase letters, numbers and dashes.</span></div>
+      </div>
+      <div class="field"><label for="psDesc">Description</label><textarea id="psDesc" rows="3" maxlength="1000"></textarea></div>
+      <div class="row3">
+        <div class="field"><label for="psPrice">Price (₱)</label><input id="psPrice" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Leave blank: coming soon"></div>
+        <div class="field" id="psStockWrap"><label for="psStock">Starting stock</label><input id="psStock" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+        <div class="field"><label for="psLow">Low stock alert at</label><input id="psLow" type="number" min="0" step="1" value="5" inputmode="numeric"></div>
+      </div>
+      <p class="hint" id="psStockNote" hidden>Current stock: <b id="psStockNow"></b>. Change it from <a href="#inventory" data-close>Inventory → Adjust</a> so the change is logged.</p>
+      <div class="row3">
+        <div class="field"><label for="psStatus">Status</label><select id="psStatus">
+          <option value="available">Available</option><option value="new">New</option><option value="coming-soon">Coming Soon</option><option value="sold-out">Sold Out</option></select></div>
+        <div class="field"><label for="psArt">Illustration</label><select id="psArt"></select></div>
+        <div class="field"><label for="psTint">Background</label><select id="psTint">
+          <option value="bg-blue">Blue</option><option value="bg-peach">Peach</option><option value="bg-sage">Sage</option><option value="bg-beige">Beige</option></select></div>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="psFeatured"> Featured on the home page</label>
+        <label><input type="checkbox" id="psCustom"> Customers can add personalization</label>
+        <label><input type="checkbox" id="psConcept"> Concept piece (shown, never orderable)</label>
+        <label><input type="checkbox" id="psArchived"> Hidden from the shop</label>
+      </div>
+      <div class="field small"><label for="psSort">Sort order</label><input id="psSort" type="number" step="1" value="0"><span class="hint">Lower numbers show first.</span></div>
+      <div class="result error" id="psError" role="alert" hidden></div>
+    </div>
+    <div class="sheet-foot">
+      <button type="button" class="link-btn danger" id="psDelete" hidden>Delete product</button>
+      <button type="submit" class="btn btn-primary" id="psSave">Save product</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- STOCK ADJUST -->
+<dialog class="sheet small" id="stockSheet" aria-labelledby="ssTitle">
+  <form class="sheet-inner" id="stockForm" novalidate>
+    <div class="sheet-head"><div><p class="eyebrow">Adjust stock</p><h2 id="ssTitle"></h2></div>
+      <button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="sheet-body">
+      <p>In stock now: <b id="ssNow"></b> → after change: <b id="ssAfter"></b></p>
+      <fieldset class="topics">
+        <legend>Reason</legend>
+        <input type="radio" name="ssReason" id="ss-restock" value="restock" checked><label for="ss-restock">New batch / restock</label>
+        <input type="radio" name="ssReason" id="ss-adjust" value="adjustment"><label for="ss-adjust">Correction (count, damage, giveaway)</label>
+      </fieldset>
+      <div class="field"><label for="ssChange">Add or remove</label><input id="ssChange" type="number" step="1" required inputmode="numeric" placeholder="e.g. 20 or -2"><span class="hint">Use a minus sign to remove.</span></div>
+      <div class="field"><label for="ssNote">Note <span class="opt">(optional)</span></label><input id="ssNote" maxlength="300" placeholder="Batch #2, recount, etc."></div>
+      <div class="result error" id="ssError" role="alert" hidden></div>
+    </div>
+    <div class="sheet-foot"><span></span><button type="submit" class="btn btn-primary" id="ssSave">Update stock</button></div>
+  </form>
+</dialog>
+
+<div class="toast hide" id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="/admin/admin.js"></script>
+</body>
+</html>
