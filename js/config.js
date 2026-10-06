@@ -5,8 +5,8 @@
    can do is limited by the Row Level Security rules in supabase/schema.sql.
    NEVER put the service_role / secret key in this file.
    ===================================================================== */
-export const SUPABASE_URL = "https://YOUR-PROJECT-ID.supabase.co";
-export const SUPABASE_ANON_KEY = "YOUR-ANON-OR-PUBLISHABLE-KEY";
+export const SUPABASE_URL = "https://hdojbwuvbfsiqgxsgbrp.supabase.co";
+export const SUPABASE_ANON_KEY = "sb_publishable_fSAO2DACx4dhqQn-tmsiTw_JUsSfg2_";
 
 export const SHOP = {
   currency: "PHP",
